@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Quiz extends JFrame implements ActionListener, Runnable {
 
@@ -16,8 +18,9 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
     ButtonGroup groupoptions;
     JButton next, submit, lifeline;
     Connection conn;
+    static Map<String, Integer> leaderboard  = new HashMap<>();
 
-    public int timer = 10; // Total quiz time in seconds
+    public int timer = 20; // Total quiz time in seconds
     public int ans_given = 0;
     public int count = 0;
     public int score = 0;
@@ -39,7 +42,7 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
 
     private void populateTable() {
         try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM qb")) {
+             ResultSet rs = stmt.executeQuery("SELECT * FROM qb ORDER BY RANDOM() LIMIT 10;")) {
             while (rs.next()) {
                 ArrayList<String> stringList = new ArrayList<>();
                 stringList.add(rs.getString("questions"));
@@ -61,6 +64,7 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
 
     // Constructor
     public Quiz(String name) {
+        leaderboard.put(name, score);
         this.name = name;
         setBounds(50, 0, 400, 400);
         getContentPane().setBackground(Color.WHITE);
@@ -167,7 +171,11 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
                 try {
                     synchronized (obj) {
                         Thread.sleep(1000); // Wait for 1 second
+                        if (timer == 0){
+
+                        }else{
                         timer--; // Decrease the timer by 1 second
+                             }
 
                         // Update time and score safely on the Event Dispatch Thread (EDT)
                         SwingUtilities.invokeLater(() -> {
@@ -196,7 +204,10 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
             if (useranswers[count][0].equals(answers.get(count))) {
                 score += 1;
             }
-
+            synchronized (obj) {
+                leaderboard.put(name,score);
+                System.out.println(leaderboard);
+            }
             count++;
 
             if (count == 9) {

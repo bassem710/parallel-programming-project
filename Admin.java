@@ -156,7 +156,7 @@ public class Admin extends JFrame implements ActionListener {
 
             for(int i=1 ; i<=Integer.parseInt(numQuizzes);i++){
                 String name = "user_" + i;
-                Thread thread = new Thread(new Quiz("name"),name);
+                Thread thread = new Thread(new Quiz(name),name);
                 thread.start();
             }
         }
