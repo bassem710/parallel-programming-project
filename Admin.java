@@ -98,7 +98,7 @@ public class Admin extends JFrame implements ActionListener {
 
     private void connectToDatabase() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123");
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123456");
         } catch (SQLException e) {
             System.out.println(e);
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -153,6 +153,12 @@ public class Admin extends JFrame implements ActionListener {
         } else if (ae.getSource() == startButton) {
             String numQuizzes = numQuizzesTextField.getText();
             JOptionPane.showMessageDialog(this, "Starting quizzes: " + numQuizzes, "Info", JOptionPane.INFORMATION_MESSAGE);
+
+            for(int i=1 ; i<=Integer.parseInt(numQuizzes);i++){
+                String name = "user_" + i;
+                Thread thread = new Thread(new Quiz("name"),name);
+                thread.start();
+            }
         }
     }
 
