@@ -29,7 +29,7 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
 
     private void connectToDatabase() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123456");
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123");
         } catch (SQLException e) {
             System.out.println(e);
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -118,13 +118,13 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
         next.addActionListener(this);
         add(next);
 
-        lifeline = new JButton("50-50");
-        lifeline.setBounds(130, 220, 100, 30);
-        lifeline.setFont(new Font("Tahoma", Font.PLAIN, 12));
-        lifeline.setBackground(new Color(30, 144, 255));
-        lifeline.setForeground(Color.WHITE);
-        lifeline.addActionListener(this);
-        add(lifeline);
+//        lifeline = new JButton("50-50");
+//        lifeline.setBounds(130, 220, 100, 30);
+//        lifeline.setFont(new Font("Tahoma", Font.PLAIN, 12));
+//        lifeline.setBackground(new Color(30, 144, 255));
+//        lifeline.setForeground(Color.WHITE);
+//        lifeline.addActionListener(this);
+//        add(lifeline);
 
         submit = new JButton("Submit");
         submit.setBounds(240, 220, 100, 30);

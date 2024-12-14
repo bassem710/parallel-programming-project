@@ -22,7 +22,7 @@ public class Admin extends JFrame implements ActionListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel heading = new JLabel("Question Bank", JLabel.CENTER);
-        heading.setFont(new Font("Viner Hand ITC", Font.BOLD, 40));
+        heading.setFont(new Font("", Font.BOLD, 40));
         heading.setForeground(new Color(30, 144, 254));
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -98,7 +98,7 @@ public class Admin extends JFrame implements ActionListener {
 
     private void connectToDatabase() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123456");
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123");
         } catch (SQLException e) {
             System.out.println(e);
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
