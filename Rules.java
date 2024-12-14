@@ -12,13 +12,13 @@ public class Rules extends JFrame implements ActionListener {
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
-        JLabel heading = new JLabel("Welcom "+ name +" to simple Minds");
+        JLabel heading = new JLabel("Welcome "+ name +" to Online Quizzes");
         heading.setBounds(50,20,700,30);
         heading.setFont(new Font("Mongolian Baiti",Font.BOLD,18));
         heading.setForeground(new Color(30,144,254));
         add(heading);
 
-        JLabel rules = new JLabel("Welcom "+ name +" to simple Minds");
+        JLabel rules = new JLabel("Welcome "+ name +" to Online Quizzes");
         rules.setBounds(20,90,700,350);
         rules.setFont(new Font("Tahoma",Font.PLAIN,16));
         rules.setText(
