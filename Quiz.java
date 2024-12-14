@@ -3,31 +3,73 @@ package quiz.application;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.*;
+import java.util.ArrayList;
 
 public class Quiz extends JFrame implements ActionListener, Runnable {
 
-    String questions[][] = new String[10][5];
-    String answers[][] = new String[10][2];
+    ArrayList<ArrayList<String>> questions = new ArrayList<>();
+    ArrayList<String> answers = new ArrayList<>();
     String useranswers[][] = new String[10][1];
-    JLabel qno, question, timeLabel;
+    JLabel qno, question, timeLabel, scoreLabel;
     JRadioButton opt1, opt2, opt3, opt4;
     ButtonGroup groupoptions;
     JButton next, submit, lifeline;
+    Connection conn;
 
-    public int timer = 60; // Total quiz time in seconds (1 minute)
+    public int timer = 10; // Total quiz time in seconds
     public int ans_given = 0;
     public int count = 0;
     public int score = 0;
+    Object obj = new Object();
+    boolean endFlag = false;
+    boolean quizEnded = false; // Prevent duplicate execution of endQuiz()
 
     String name;
+
+    private void connectToDatabase() {
+        try {
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/quizzes", "postgres", "123456");
+        } catch (SQLException e) {
+            System.out.println(e);
+            JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+    }
+
+    private void populateTable() {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM qb")) {
+            while (rs.next()) {
+                ArrayList<String> stringList = new ArrayList<>();
+                stringList.add(rs.getString("questions"));
+                stringList.add(rs.getString("option0"));
+                stringList.add(rs.getString("option1"));
+                stringList.add(rs.getString("option2"));
+                stringList.add(rs.getString("option3"));
+
+                // Store the correct option text
+                answers.add(rs.getString("option" + rs.getInt("answer")));
+                questions.add(stringList);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Failed to retrieve questions: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean timerStarted = false; // Ensure only one timer thread runs
 
     // Constructor
     public Quiz(String name) {
         this.name = name;
-        setBounds(50, 0, 400, 400);  // Window size adjusted to 400x400
+        setBounds(50, 0, 400, 400);
         getContentPane().setBackground(Color.WHITE);
         setLayout(null);
 
+        connectToDatabase();
+        populateTable();
+
+        // Add all components
         qno = new JLabel();
         qno.setBounds(20, 20, 50, 30);
         qno.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -37,79 +79,6 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
         question.setBounds(80, 20, 300, 30);
         question.setFont(new Font("Tahoma", Font.PLAIN, 14));
         add(question);
-
-        questions[0][0] = "Which is used to find and fix bugs in the Java programs.?";
-        questions[0][1] = "JVM";
-        questions[0][2] = "JDB";
-        questions[0][3] = "JDK";
-        questions[0][4] = "JRE";
-
-        questions[1][0] = "What is the return type of the hashCode() method in the Object class?";
-        questions[1][1] = "int";
-        questions[1][2] = "Object";
-        questions[1][3] = "long";
-        questions[1][4] = "void";
-
-        questions[2][0] = "Which package contains the Random class?";
-        questions[2][1] = "java.util package";
-        questions[2][2] = "java.lang package";
-        questions[2][3] = "java.awt package";
-        questions[2][4] = "java.io package";
-
-        questions[3][0] = "An interface with no fields or methods is known as?";
-        questions[3][1] = "Runnable Interface";
-        questions[3][2] = "Abstract Interface";
-        questions[3][3] = "Marker Interface";
-        questions[3][4] = "CharSequence Interface";
-
-        questions[4][0] = "In which memory a String is stored, when we create a string using new operator?";
-        questions[4][1] = "Stack";
-        questions[4][2] = "String memory";
-        questions[4][3] = "Random storage space";
-        questions[4][4] = "Heap memory";
-
-        questions[5][0] = "Which of the following is a marker interface?";
-        questions[5][1] = "Runnable interface";
-        questions[5][2] = "Remote interface";
-        questions[5][3] = "Readable interface";
-        questions[5][4] = "Result interface";
-
-        questions[6][0] = "Which keyword is used for accessing the features of a package?";
-        questions[6][1] = "import";
-        questions[6][2] = "package";
-        questions[6][3] = "extends";
-        questions[6][4] = "export";
-
-        questions[7][0] = "In java, jar stands for?";
-        questions[7][1] = "Java Archive Runner";
-        questions[7][2] = "Java Archive";
-        questions[7][3] = "Java Application Resource";
-        questions[7][4] = "Java Application Runner";
-
-        questions[8][0] = "Which of the following is a mutable class in java?";
-        questions[8][1] = "java.lang.StringBuilder";
-        questions[8][2] = "java.lang.Short";
-        questions[8][3] = "java.lang.Byte";
-        questions[8][4] = "java.lang.String";
-
-        questions[9][0] = "Which of the following option leads to the portability and security of Java?";
-        questions[9][1] = "Bytecode is executed by JVM";
-        questions[9][2] = "The applet makes the Java code secure and portable";
-        questions[9][3] = "Use of exception handling";
-        questions[9][4] = "Dynamic binding between objects";
-
-        answers[0][1] = "JDB";
-        answers[1][1] = "int";
-        answers[2][1] = "java.util package";
-        answers[3][1] = "Marker Interface";
-        answers[4][1] = "Heap memory";
-        answers[5][1] = "Remote interface";
-        answers[6][1] = "import";
-        answers[7][1] = "Java Archive";
-        answers[8][1] = "java.lang.StringBuilder";
-        answers[9][1] = "Bytecode is executed by JVM";
-
-        // Add more question data...
 
         opt1 = new JRadioButton();
         opt1.setBounds(20, 60, 350, 30);
@@ -166,36 +135,52 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
         submit.setEnabled(false);
         add(submit);
 
-        timeLabel = new JLabel("Time left: " + timer);
-        timeLabel.setBounds(300, 50, 200, 30);
+        timeLabel = new JLabel("Time left: " + timer + " seconds");
+        timeLabel.setBounds(20, 290, 200, 30);
         timeLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
         add(timeLabel);
 
+        scoreLabel = new JLabel("Score: " + score);
+        scoreLabel.setBounds(20, 270, 200, 30);
+        scoreLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+        add(scoreLabel);
+
         start(count);
 
-        new Thread(this).start(); // Start the timer thread
-
         setVisible(true);
+
+        // Start the timer safely
+        SwingUtilities.invokeLater(() -> startTimer());
+    }
+
+    private void startTimer() {
+        if (!timerStarted) { // Ensure only one thread is created
+            timerStarted = true;
+            new Thread(this).start();
+        }
     }
 
     @Override
     public void run() {
-        // Countdown timer logic in the background thread
-        while (timer > 0) {
-            try {
-                Thread.sleep(1000);  // Wait for 1 second
-                timer--;  // Decrease the timer by 1 second
+        while (!endFlag) {
+            while (timer > 0) {
+                try {
+                    synchronized (obj) {
+                        Thread.sleep(1000); // Wait for 1 second
+                        timer--; // Decrease the timer by 1 second
 
-                // Update the timer label safely on the EDT
-                SwingUtilities.invokeLater(() -> {
-                    timeLabel.setText("Time left: " + timer + " seconds");
-                });
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                        // Update time and score safely on the Event Dispatch Thread (EDT)
+                        SwingUtilities.invokeLater(() -> {
+                            timeLabel.setText("Time left: " + timer + " seconds");
+                            scoreLabel.setText("Score: " + score);
+                        });
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+            endQuiz(); // End quiz when the timer reaches 0
         }
-        // When the timer reaches 0, call the method to end the quiz
-        endQuiz();
     }
 
     @Override
@@ -208,66 +193,66 @@ public class Quiz extends JFrame implements ActionListener, Runnable {
                 useranswers[count][0] = groupoptions.getSelection().getActionCommand();
             }
 
-            if (count == 8) {
+            if (useranswers[count][0].equals(answers.get(count))) {
+                score += 1;
+            }
+
+            count++;
+
+            if (count == 9) {
                 next.setEnabled(false);
                 submit.setEnabled(true);
             }
 
-            count++;
-            start(count);
+            start(count); // Show the next question
         } else if (ae.getSource() == lifeline) {
-            if (count == 2 || count == 4 || count == 6 || count == 8 || count == 9) {
-                opt2.setEnabled(false);
-                opt3.setEnabled(false);
-            } else {
-                opt1.setEnabled(false);
-                opt4.setEnabled(false);
-            }
             lifeline.setEnabled(false);
         } else if (ae.getSource() == submit) {
-            ans_given = 1;
             if (groupoptions.getSelection() == null) {
                 useranswers[count][0] = "";
             } else {
                 useranswers[count][0] = groupoptions.getSelection().getActionCommand();
             }
 
-            for (int i = 0; i < useranswers.length; i++) {
-                if (useranswers[i][0].equals(answers[i][1])) {
-                    score += 10;
-                }
+            if (useranswers[count][0].equals(answers.get(count))) {
+                score += 1;
             }
-            setVisible(false);
-            new Score(name, score); // Show final score
+            endQuiz();
         }
     }
 
-    // Method to end the quiz when time is up
     private void endQuiz() {
+        if (quizEnded) return; // Prevent duplicate execution
+        quizEnded = true;
+
         next.setEnabled(false);
-        submit.setEnabled(true);
+        submit.setEnabled(false);
+        endFlag = true;
+
+        JOptionPane.showMessageDialog(this,
+                "Quiz completed!\nFinal Score: " + score,
+                "Quiz Result",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        dispose();
     }
 
-    // Method to start or update the question
     public void start(int count) {
-        // Update question and options
-        SwingUtilities.invokeLater(() -> {
-            qno.setText("" + (count + 1) + ". ");
-            question.setText(questions[count][0]);
-            opt1.setText(questions[count][1]);
-            opt1.setActionCommand(questions[count][1]);
+        qno.setText("" + (count + 1) + ". ");
+        question.setText(questions.get(count).get(0));
+        opt1.setText(questions.get(count).get(1));
+        opt1.setActionCommand(questions.get(count).get(1));
 
-            opt2.setText(questions[count][2]);
-            opt2.setActionCommand(questions[count][2]);
+        opt2.setText(questions.get(count).get(2));
+        opt2.setActionCommand(questions.get(count).get(2));
 
-            opt3.setText(questions[count][3]);
-            opt3.setActionCommand(questions[count][3]);
+        opt3.setText(questions.get(count).get(3));
+        opt3.setActionCommand(questions.get(count).get(3));
 
-            opt4.setText(questions[count][4]);
-            opt4.setActionCommand(questions[count][4]);
+        opt4.setText(questions.get(count).get(4));
+        opt4.setActionCommand(questions.get(count).get(4));
 
-            groupoptions.clearSelection();
-        });
+        groupoptions.clearSelection();
     }
 
     public static void main(String[] args) {
